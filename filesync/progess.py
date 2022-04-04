@@ -4,7 +4,7 @@ import requests
 
 class Display():
 
-    def __init__(self, display_uri: str, type: str = " "):
+    def __init__(self, type: str = " ", display_uri: str = None):
         self.display_uri = display_uri
         self.type = type
         self.num_up = 0
@@ -24,6 +24,7 @@ class Display():
 
     def display(self, msg: str):
         try:
-            requests.put(self.display_uri, json= {'lower_layer_text': msg + '\n\rdown: ' + str(self.num_down) + ' up: ' + str(self.num_up) })
+            if self.display_uri is not None:
+                requests.put(self.display_uri, json= {'lower_layer_text': msg + '\n\rdown: ' + str(self.num_down) + ' up: ' + str(self.num_up) })
         except Exception:
             print("error updating panel")
