@@ -139,34 +139,42 @@ class WebDavStoreProvider:
             data=self.PROPFIND_REQUEST
         )
         r.raise_for_status()
-        return self.parse_propfind_response(path, r.content)
+        try:
+            return self.parse_propfind_response(path, r.content)
+        except Exception as e:
+            logging.error("Error occurred by parsing response of " + r.text + " " + str(e))
 
     def parse_propfind_response(self, path, binary_content):
-        info = []
-        filepath = None
-        size = None
-        is_dir = None
-        last_modified = None
-        for event, element in etree.iterparse(BytesIO(binary_content)):
-            if element.tag.endswith("href"):
-                filepath = unquote(element.text)
-            elif element.tag.endswith("iscollection"):
-                is_dir = element.text == 'true'
-            elif element.tag.endswith("Win32LastModifiedTime"):
-                last_modified = dateparser.parse(element.text)
-            elif element.tag.endswith("getcontentlength"):
-                size = int(element.text)
+        try:
+            info = []
+            filepath = None
+            size = None
+            is_dir = None
+            last_modified = None
+            for event, element in etree.iterparse(BytesIO(binary_content)):
+                if element.tag.endswith("href"):
+                    filepath = unquote(element.text)
+                elif element.tag.endswith("iscollection"):
+                    is_dir = element.text == 'true'
+                elif element.tag.endswith("Win32LastModifiedTime"):
+                    last_modified = dateparser.parse(element.text)
+                elif element.tag.endswith("getcontentlength"):
+                    size = int(element.text)
 
-            elif element.tag.endswith("response"):
-                if filepath is not None and size is not None and is_dir is not None and last_modified is not None:
-                    rel_path = filepath[len(self.root):]
-                    if rel_path != path and rel_path != unquote(path):
-                        info.append(FileInfo(self, self.root, rel_path, size, last_modified, is_dir))
-                filepath = None
-                size = None
-                is_dir = None
-                last_modified = None
-        return info
+                elif element.tag.endswith("response"):
+                    if filepath is not None and size is not None and is_dir is not None and last_modified is not None:
+                        rel_path = filepath[len(self.root):]
+                        if rel_path != path and rel_path != unquote(path):
+                            info.append(FileInfo(self, self.root, rel_path, size, last_modified, is_dir))
+                    filepath = None
+                    size = None
+                    is_dir = None
+                    last_modified = None
+            return info
+        except Exception as e:
+            print(e)
+            raise e
+
 
     def read(self, filepath, local_target, last_modified_epoch):
         temp_file = self.tempfile_name(local_target)

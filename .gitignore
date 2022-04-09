@@ -131,3 +131,4 @@ dmypy.json
 /.idea/filesync.iml
 /.idea/misc.xml
 /.idea/vcs.xml
+/filesync/deleteme.py
