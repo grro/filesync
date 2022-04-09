@@ -181,12 +181,13 @@ class WebDavStoreProvider:
         self.make_parents(temp_file)
         remote_path = self.root + filepath
         try:
-            self.client.download_sync(remote_path=remote_path, local_path=temp_file)
+            try:
+                self.client.download_sync(remote_path=remote_path, local_path=temp_file)
+            except Exception as e:
+                logging.warning("error occurred downloading " + remote_path, e)
+                raise e
             os.replace(temp_file, local_target)
             os.utime(local_target, (last_modified_epoch, last_modified_epoch))
-        except Exception as e:
-            logging.warning("error occurred downloading " + remote_path, e)
-            raise e
         finally:
             self.delete_file(temp_file)
 
