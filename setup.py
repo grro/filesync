@@ -35,7 +35,7 @@ setup(
         'file', 'synchronization', 'webdav'
     ],
     install_requires=[
-        'dateparser>=1.1.1', 'webdavclient3>=3.14.5', 'requests'
+        'dateparser>=1.1.1', 'webdavclient3==3.14.5', 'requests>=2.27.1'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
