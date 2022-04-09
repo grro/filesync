@@ -179,10 +179,14 @@ class WebDavStoreProvider:
     def read(self, filepath, local_target, last_modified_epoch):
         temp_file = self.tempfile_name(local_target)
         self.make_parents(temp_file)
+        remote_path = self.root + filepath
         try:
-            self.client.download_sync(remote_path=self.root + filepath, local_path=temp_file)
+            self.client.download_sync(remote_path=remote_path, local_path=temp_file)
             os.replace(temp_file, local_target)
             os.utime(local_target, (last_modified_epoch, last_modified_epoch))
+        except Exception as e:
+            logging.warning("error occurred downloading " + remote_path, e)
+            raise e
         finally:
             self.delete_file(temp_file)
 
@@ -210,6 +214,9 @@ class WebDavStoreProvider:
             self.client.set_property(remote_path, {'namespace': 'urn:schemas-microsoft-com:',
                                                    'name': 'Win32LastModifiedTime',
                                                    'value': time})
+        except Exception as e:
+            logging.warning("error occurred uploading " + remote_path, e)
+            raise e
         finally:
             self.delete(webdav_temp_file)
 
@@ -225,8 +232,12 @@ class WebDavStoreProvider:
     def make_parents(self, filepath):
         parent = filepath[:filepath.rindex('/')]
         if not os.path.exists(parent):
-            os.makedirs(parent)
-            logging.info("directory " + parent + " created")
+            try:
+                os.makedirs(parent)
+                logging.info("directory " + parent + " created")
+            except Exception as e:
+                logging.warning("could not create parent directory " + parent)
+                raise e
 
     def make_webdav_parents(self, filepath, max_depth=100):
         parent = filepath[:filepath.rindex('/')]
