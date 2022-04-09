@@ -378,13 +378,13 @@ def sync_folder(source_address: str, target_address: str, ignore_lastmodified: b
                     if filecopied_callback is not None:
                         filecopied_callback()
                 except ResponseErrorCode as re:
-                    logging.warning("FILECOPY ERROR copying " + source.address + source_file.path + " to " + target.address + source_file.path + "\n" + str(re))
+                    logging.warning("FILECOPY ERROR copying " + source.address + source_file.path + " to " + target.address + source_file.path + " Got response error code " + str(re.code ), re)
                     if re.code == 429:
                         logging.info("waiting 30 sec to reduce request load ...")
                         time.sleep(30)
                 except Exception as e:
                     num_errors = num_errors + 1
-                    logging.warning("FILECOPY ERROR copying " + source.address + source_file.path + " to " + target.address + source_file.path + "\n" + str(e))
+                    logging.warning("FILECOPY ERROR copying " + source.address + source_file.path + " to " + target.address + source_file.path, e)
 
     if num_errors > 0:
         logging.debug("Resetting hash")
