@@ -11,12 +11,8 @@ Use *sync_folder* as shown below to copy local files to cloud or visa verse
 ```
 from filesync.filesync import sync_folder
 
-
 cloud_uri="https://... my cloud..... "
 local = "/media/data"
-
-print("** sync cloud homevideo -> local homevideo **")
-sync_folder(cloud + '/homevideo', local + '/homevideo', ignore_patterns=['*/~*'], filecopied_callback=display.on_downloaded)
 
 
 ###############
