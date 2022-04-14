@@ -11,7 +11,7 @@ Use *sync_folder* as shown below to copy local files to cloud or visa verse
 ```
 from filesync.filesync import sync_folder
 
-cloud_uri="https://... my cloud..... "
+cloud_uri="https://myuser:mypassword@webdav.cloud.."
 local = "/media/data"
 
 
