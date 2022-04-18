@@ -194,23 +194,14 @@ class WebDavStoreProvider:
     def write(self, local_source, webdav_target, last_modified_epoch):
         remote_path = self.root + webdav_target
         webdav_temp_file = self.tempfile_name(remote_path)
-        webdav_old_file = self.tempfile_name(remote_path, suffix='old')
         try:
             # upload local file as tempfile
             self.make_webdav_parents(webdav_temp_file)
             time = datetime.fromtimestamp(last_modified_epoch, tz=timezone('UTC')).strftime("%a, %d %b %Y %H:%M:%S %Z")
             self.client.upload(remote_path=webdav_temp_file, local_path=local_source)
 
-            # if target file already exits, it will be reamed to save it
-            if self.client.check(remote_path):
-                self.client.move(remote_path_from=remote_path, remote_path_to=webdav_old_file)
-
             # rename uploaded temp file to target file
             self.client.move(remote_path_from=webdav_temp_file, remote_path_to=remote_path)
-
-            # delete saved, old target file
-            if  self.client.check(webdav_old_file):
-                self.delete(webdav_old_file)
 
             self.client.set_property(remote_path, {'namespace': 'urn:schemas-microsoft-com:',
                                                    'name': 'Win32LastModifiedTime',
