@@ -85,6 +85,8 @@ class FileStoreProvider:
 
 class WebDavStoreProvider:
 
+    TEMP_PREFIX = "~temp~_"
+
     PROPFIND_REQUEST = '''<?xml version="1.0" encoding="utf-8" ?>
         <D:propfind xmlns:D="DAV:">
             <D:prop xmlns:ms="urn:schemas-microsoft-com:">
@@ -218,7 +220,7 @@ class WebDavStoreProvider:
 
     def tempfile_name(self, filenname: str, suffix: str='temp'):
         idx = filenname.rindex('/')
-        temp_file = filenname[:idx] + "/~" + str(uuid.uuid1()) + "_" + suffix + "_" + filenname[idx+1:]
+        temp_file = filenname[:idx] + "/" + WebDavStoreProvider.TEMP_PREFIX + str(uuid.uuid1()) + "_" + suffix + "_" + filenname[idx+1:]
         return temp_file
 
     def make_parents(self, filepath):
