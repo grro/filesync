@@ -291,6 +291,8 @@ def sync_folder(source_address: str, target_address: str, ignore_lastmodified: b
     source = storeprovider(source_address)
     target = storeprovider(target_address)
 
+    ignore_patterns = ignore_patterns + ['*/' + WebDavStoreProvider.TEMP_PREFIX + '*']
+
     if len(ignore_patterns) > 0:
         logging.info("sync artifacts from " + source.address + " to " + target.address + " using ignore patterns " + ", ".join(ignore_patterns))
     else:
@@ -304,8 +306,6 @@ def sync_folder(source_address: str, target_address: str, ignore_lastmodified: b
     if ignore_hash:
         logging.info("ignoring hash")
     logging.info("scanning source " + source.address + "... ")
-
-    ignore_patterns = ignore_patterns + ['*/' + WebDavStoreProvider.TEMP_PREFIX + '*']
 
     try:
         start = time.time()
