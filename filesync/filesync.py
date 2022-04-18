@@ -305,6 +305,8 @@ def sync_folder(source_address: str, target_address: str, ignore_lastmodified: b
         logging.info("ignoring hash")
     logging.info("scanning source " + source.address + "... ")
 
+    ignore_patterns = ignore_patterns + ['*/' + WebDavStoreProvider.TEMP_PREFIX + '*']
+
     try:
         start = time.time()
         source_file_tree = source.info_tree(ignore_subdirs)
