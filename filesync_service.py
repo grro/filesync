@@ -85,10 +85,11 @@ class Config:
 
 class Sync(Progress):
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, workdir: str):
         self.num_up = 0
         self.num_down = 0
         self.config = config
+        self.workdir = workdir
         self.display = Display() if len(config.display) == 0 else RemoteDisplay(config.display)
 
     def execute(self):
@@ -102,6 +103,7 @@ class Sync(Progress):
                         ignore_hash=task.ignore_hash,
                         ignore_subdirs=task.ignore_subdirs,
                         progress=self,
+                        workdir=self.workdir,
                         simulate=self.config.simulate)
         self.display.show(datetime.now().strftime("%d %b, %H:%M") + "\n\r" + str(self.num_down) + " down; " +  str(self.num_up) + " up")
 
@@ -117,8 +119,9 @@ class Sync(Progress):
 
 class ScheduledJob:
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, workdir: str):
         self.config = config
+        self.workdir = workdir
         self.__is_running = False
 
     def start(self):
@@ -134,7 +137,7 @@ class ScheduledJob:
         while self.__is_running:
             try:
                 if pycron.is_now(self.config.cron):
-                    Sync(self.config).execute()
+                    Sync(self.config, self.workdir).execute()
             except Exception as e:
                 logging.warning(str(e))
                 #print(traceback.format_exc())
@@ -172,7 +175,7 @@ class FilesyncService:
                 with open(os.path.join(self.dir, f.name), 'r') as file:
                     yml = yaml.safe_load(file)
                     config = Config(file.name, yml)
-                    new_jobs.add(ScheduledJob(config))
+                    new_jobs.add(ScheduledJob(config, self.dir))
                     logging.info(f.name + " reloaded (" + str(len(new_jobs)) + " jobs)")
         self.jobs = new_jobs
         [job.start() for job in self.jobs]

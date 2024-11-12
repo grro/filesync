@@ -20,7 +20,6 @@ import logging
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-sync_prop_file = "filesync/sync.p"
 
 
 
@@ -310,9 +309,12 @@ def sync_folder(source_address: str,
                 ignore_hash: bool=False,
                 ignore_subdirs: bool=False,
                 progress: Progress = None,
+                workdir: str = "/etc/sync/sync.p",
                 simulate: bool= False):
     source = storeprovider(source_address)
     target = storeprovider(target_address)
+
+    sync_prop_file = os.path.join(workdir, "sync.p")
 
     ignore_patterns = ignore_patterns + ['*/' + WebDavStoreProvider.TEMP_PREFIX + '*']
 
@@ -351,12 +353,15 @@ def sync_folder(source_address: str,
                 with open(sync_prop_file, "rb") as f:
                     hashes = pickle.load(f)
                     if hash_key in hashes.keys():
+                        logging.info(sync_prop_file + " entry found for key " + hash_key)
                         previous_hash_code = hashes.get(hash_key)
                         if hash_code == previous_hash_code:
                             logging.info("source is unchanged")
                             return 0
                         else:
                             logging.info("hashcode " + hash_code + " != previous hashcode " + previous_hash_code + " (" + hash_key + ")")
+                    else:
+                        logging.info(sync_prop_file + " no entry found for key " + hash_key)
         except Exception as e:
             logging.warning(str(e))
 

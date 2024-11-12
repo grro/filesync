@@ -16,6 +16,7 @@ class RemoteDisplay(Display):
         try:
             if self.display_uri is not None:
                 uri = self.display_uri + "/lower_layer_text"
-                requests.put(uri, json= {'lower_layer_text': msg })
+                resp = requests.put(uri, json= {'lower_layer_text': msg })
+                print(resp)
         except Exception:
             print("error updating panel")
