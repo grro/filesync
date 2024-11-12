@@ -8,7 +8,6 @@ from datetime import datetime
 from time import sleep
 from typing import Dict, Any, List
 from watchdog.observers import Observer
-from threading import Thread
 from watchdog.events import FileSystemEventHandler
 from filesync import sync_folder, Progress
 from display import Display, RemoteDisplay
@@ -117,68 +116,48 @@ class Sync(Progress):
 
 
 
-class ScheduledJob:
-
-    def __init__(self, config: Config, workdir: str):
-        self.config = config
-        self.workdir = workdir
-        self.__is_running = False
-
-    def start(self):
-        self.__is_running = True
-        Thread(target=self.__cron_loop, daemon=True).start()
-
-    def close(self):
-        self.__is_running = False
-
-    def __cron_loop(self):
-        id = str(threading.get_native_id())
-        logging.info("scheduler " + id + " (" + self.config.file + ") started")
-        while self.__is_running:
-            try:
-                if pycron.is_now(self.config.cron):
-                    Sync(self.config, self.workdir).execute()
-            except Exception as e:
-                logging.warning(str(e))
-                #print(traceback.format_exc())
-            sleep(40)  # <60 and >30
-        logging.info("scheduler " + id + " (" + self.config.file + ") terminated")
-
-
 class FilesyncService:
 
     def __init__(self, dir: str):
         self.__is_running = True
         self.dir = dir
         self.observer = Observer()
-        self.jobs: List[ScheduledJob] = list()
+        self.configs = list()
 
     def start(self):
         self.__is_running = True
         self.observer.schedule(FileHandler(self.__reload), self.dir, recursive=False)
         self.observer.start()
         self.__reload()
-        while self.__is_running:
-            sleep(1)
+        self.__cron_loop()
 
 
     def close(self):
         self.__is_running = False
         self.observer.stop()
-        [job.close() for job in self.jobs]
 
     def __reload(self):
-        [job.close() for job in self.jobs]
-        new_jobs = set()
+        new_configs = set()
         for f in os.scandir(self.dir):
             if f.is_file() and f.name.endswith(".yml"):
                 with open(os.path.join(self.dir, f.name), 'r') as file:
                     yml = yaml.safe_load(file)
                     config = Config(file.name, yml)
-                    new_jobs.add(ScheduledJob(config, self.dir))
-                    logging.info(f.name + " reloaded (" + str(len(new_jobs)) + " jobs)")
-        self.jobs = new_jobs
-        [job.start() for job in self.jobs]
+                    new_configs.add(config)
+                    logging.info(f.name + " reloaded (" + str(len(new_configs)) + " jobs)")
+        self.configs = new_configs
+
+    def __cron_loop(self):
+        id = str(threading.get_native_id())
+        while self.__is_running:
+            try:
+                for config in self.configs:
+                    if pycron.is_now(config.cron):
+                        Sync(config, self.dir).execute()
+            except Exception as e:
+                logging.warning(str(e))
+                #print(traceback.format_exc())
+            sleep(40)  # <60 and >30
 
 
 if __name__ == '__main__':
