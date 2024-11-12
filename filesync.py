@@ -20,7 +20,18 @@ import logging
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-sync_prop_file = "sync.p"
+sync_prop_file = "filesync/sync.p"
+
+
+
+class Progress:
+
+    def on_uploaded(self, filename: str):
+        pass
+
+    def on_downloaded(self, filename: str):
+        pass
+
 
 
 class FileInfo:
@@ -32,6 +43,10 @@ class FileInfo:
         self.size = size
         self.last_modified = last_modified
         self.is_dir = is_dir
+
+    @property
+    def filename(self) -> str:
+        return self.path.split("/")[-1]
 
     def copy_to(self, target_provider):
         if self.provider.type() == "local" and target_provider.type() == "webdav":
@@ -287,16 +302,24 @@ def print_elapsed_time(time_sec):
     else:
         return "{0:.1f} sec".format(time_sec)
 
-def sync_folder(source_address: str, target_address: str, ignore_lastmodified: bool=False, ignore_filesize: bool=False, ignore_patterns: List[str]=[], ignore_hash: bool=False, ignore_subdirs: bool=False, filecopied_callback = None):
+def sync_folder(source_address: str,
+                target_address: str,
+                ignore_lastmodified: bool=False,
+                ignore_filesize: bool=False,
+                ignore_patterns: List[str]=list(),
+                ignore_hash: bool=False,
+                ignore_subdirs: bool=False,
+                progress: Progress = None,
+                simulate: bool= False):
     source = storeprovider(source_address)
     target = storeprovider(target_address)
 
     ignore_patterns = ignore_patterns + ['*/' + WebDavStoreProvider.TEMP_PREFIX + '*']
 
     if len(ignore_patterns) > 0:
-        logging.info("sync artifacts from " + source.address + " to " + target.address + " using ignore patterns " + ", ".join(ignore_patterns))
+        logging.info("sync artifacts from '" + source.address + "' to '" + target.address + "' using ignore patterns " + ", ".join(ignore_patterns))
     else:
-        logging.info("sync artifacts from " + source.address + " to " + target.address)
+        logging.info("sync artifacts from '" + source.address + "' to '" + target.address + "'")
     if ignore_lastmodified:
         logging.info("suppressing last modified check")
     if ignore_filesize:
@@ -305,6 +328,8 @@ def sync_folder(source_address: str, target_address: str, ignore_lastmodified: b
         logging.info("ignoring sub dirs")
     if ignore_hash:
         logging.info("ignoring hash")
+    if simulate:
+        logging.info("simulate copying")
     logging.info("scanning source " + source.address + "... ")
 
     try:
@@ -322,15 +347,16 @@ def sync_folder(source_address: str, target_address: str, ignore_lastmodified: b
     previous_hash_code = "<unset>"
     if not ignore_hash:
         try:
-            with open(sync_prop_file, "rb") as f:
-                hashes = pickle.load(f)
-                if hash_key in hashes.keys():
-                    previous_hash_code = hashes.get(hash_key)
-                    if hash_code == previous_hash_code:
-                        logging.info("source is unchanged")
-                        return 0
-                    else:
-                        logging.info("hashcode " + hash_code + " != previous hashcode " + previous_hash_code + " (" + hash_key + ")")
+            if os.path.isfile(sync_prop_file):
+                with open(sync_prop_file, "rb") as f:
+                    hashes = pickle.load(f)
+                    if hash_key in hashes.keys():
+                        previous_hash_code = hashes.get(hash_key)
+                        if hash_code == previous_hash_code:
+                            logging.info("source is unchanged")
+                            return 0
+                        else:
+                            logging.info("hashcode " + hash_code + " != previous hashcode " + previous_hash_code + " (" + hash_key + ")")
         except Exception as e:
             logging.warning(str(e))
 
@@ -365,14 +391,19 @@ def sync_folder(source_address: str, target_address: str, ignore_lastmodified: b
             else:
                 try:
                     info = human_readable_size(source_file.size) +", " + source_file.last_modified.strftime("%Y-%m-%dT%H:%M:%S")
-                    logging.info("copying " + source.address +  "... to " + target.address + source_file.path +  " (" + info + ")  " + reason)
-                    start = time.time()
-                    source_file.copy_to(target)
-                    elapsed = time.time() - start
-                    logging.info("elapsed time " + print_elapsed_time(elapsed))
+                    if simulate:
+                        logging.info("simulate copying " + source.address +  "... to " + target.address + source_file.path +  " (" + info + ")  " + reason)
+                    else:
+                        logging.info("copying " + source.address +  "... to " + target.address + source_file.path +  " (" + info + ")  " + reason)
+                        start = time.time()
+                        source_file.copy_to(target)
+                        elapsed = time.time() - start
+                        logging.info("elapsed time " + print_elapsed_time(elapsed))
                     num_files_copied = num_files_copied + 1
-                    if filecopied_callback is not None:
-                        filecopied_callback()
+                    if source.type() == 'local':
+                        progress.on_uploaded(source_file.filename)
+                    else:
+                        progress.on_downloaded(source_file.filename)
                 except ResponseErrorCode as re:
                     logging.warning("FILECOPY ERROR copying " + source.address + source_file.path + " to " + target.address + source_file.path + " Got response error code " + str(re.code ), re)
                     if re.code == 429:
