@@ -107,11 +107,11 @@ class Sync(Progress):
         self.display.show(datetime.now().strftime("%d %b, %H:%M") + "\n\r" + str(self.num_down) + " down; " +  str(self.num_up) + " up")
 
     def on_uploaded(self, filename: str):
-        self.num_up = self.num_up + 1
+        self.num_up += 1
         self.display.show("sync...\n\r" + filename)
 
     def on_downloaded(self, filename: str):
-        self.num_down = self.num_down + 1
+        self.num_down += 1
         self.display.show("sync...\n\r" + filename)
 
 
