@@ -81,7 +81,6 @@ class Config:
         return hash(self.cron + ",".join([str(task) for task in self.tasks]))
 
 
-
 class Sync(Progress):
 
     def __init__(self, config: Config, workdir: str):
@@ -92,6 +91,7 @@ class Sync(Progress):
         self.display = Display() if len(config.display) == 0 else RemoteDisplay(config.display)
 
     def execute(self):
+        logging.info("executing sync " + self.config.file + " cron='" + self.config.cron + "' display=" + self.config.display)
         for task in self.config.tasks:
             self.display.show("sync\n\r" + task.target.split("/")[-1] + "...")
             sync_folder(source_address=task.source,
