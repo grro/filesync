@@ -367,7 +367,7 @@ def sync_folder(source_address: str,
                         #logging.info(sync_prop_file + " entry found for key " + hash_key)
                         previous_hash_code = hashes.get(hash_key)
                         if hash_code == previous_hash_code:
-                            logging.info("source is unchanged")
+                            logging.info("source " + anonymize(source_address) + " - is unchanged")
                             return 0
                         else:
                             logging.debug("hashcode " + hash_code + " != previous hashcode " + previous_hash_code + " (" + hash_key + ")")
@@ -378,7 +378,7 @@ def sync_folder(source_address: str,
             logging.warning("error occurred scanning mail info tree" + str(e))
 
     try:
-        logging.info("scanning target " + target.address + "... ")
+        logging.info("scanning target " + anonymize(target_address) + "... ")
         start = time.time()
         target_file_tree = target.info_tree(ignore_subdirs)
         elapsed = time.time() - start
@@ -409,9 +409,9 @@ def sync_folder(source_address: str,
                 try:
                     info = human_readable_size(source_file.size) +", " + source_file.last_modified.strftime("%Y-%m-%dT%H:%M:%S")
                     if simulate:
-                        logging.info("simulate copying " + source.address +  "... to " + target.address + source_file.path +  " (" + info + ")  " + reason)
+                        logging.info("simulate copying " + anonymize(source.address) +  "... to " + anonymize(target.address) + source_file.path +  " (" + info + ")  " + reason)
                     else:
-                        logging.info("copying " + source.address +  "... to " + target.address + source_file.path +  " (" + info + ")  " + reason)
+                        logging.info("copying " + anonymize(source.address) +  "... to " + anonymize(target.address) + source_file.path +  " (" + info + ")  " + reason)
                         start = time.time()
                         source_file.copy_to(target)
                         elapsed = time.time() - start
@@ -422,7 +422,7 @@ def sync_folder(source_address: str,
                     else:
                         progress.on_downloaded(source_file.filename)
                 except ResponseErrorCode as re:
-                    logging.warning("FILECOPY ERROR copying " + source.address + source_file.path + " to " + target.address + source_file.path + " Got response error code " + str(re.code ), re)
+                    logging.warning("FILECOPY ERROR copying " + anonymize(source.address) + source_file.path + " to " + anonymize(target.address) + source_file.path + " Got response error code " + str(re.code ), re)
                     if re.code == 429:
                         logging.info("waiting 30 sec to reduce request load ...")
                         time.sleep(30)
