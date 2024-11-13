@@ -158,8 +158,8 @@ class FilesyncService:
                     if pycron.is_now(config.cron):
                         Sync(config, self.dir).execute()
                 except Exception as e:
-                    logging.warning("Error occurred processing snyc for " + config.file + "  " + str(e))
-                    print(traceback.format_exc())
+                    logging.warning("Error occurred processing sync for " + config.file + "  " + str(e))
+                    logging.warning(traceback.format_exc())
             sleep(40)  # <60 and >30
 
 
