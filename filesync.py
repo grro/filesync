@@ -1,3 +1,4 @@
+import traceback
 from webdav3.client import Client
 from webdav3.exceptions import ResponseErrorCode
 from datetime import datetime
@@ -374,7 +375,8 @@ def sync_folder(source_address: str,
                         logging.debug(sync_prop_file + " no entry found for key " + hash_key)
                         pass
         except Exception as e:
-            logging.warning(str(e))
+            logging.warning("error occurred scanning mail info tree" + str(e))
+            print(traceback.format_exc())
 
     try:
         logging.info("scanning target " + target.address + "... ")

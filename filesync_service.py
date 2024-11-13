@@ -153,13 +153,13 @@ class FilesyncService:
 
     def __cron_loop(self):
         while self.__is_running:
-            try:
-                for config in self.configs:
+            for config in self.configs:
+                try:
                     if pycron.is_now(config.cron):
                         Sync(config, self.dir).execute()
-            except Exception as e:
-                logging.warning(str(e))
-                print(traceback.format_exc())
+                except Exception as e:
+                    logging.warning("Error occurred processing snyc for " + config.file + "  " + str(e))
+                    print(traceback.format_exc())
             sleep(40)  # <60 and >30
 
 
