@@ -1,6 +1,6 @@
 import sys
 import logging
-import threading
+import traceback
 import os
 import yaml
 import pycron
@@ -159,7 +159,7 @@ class FilesyncService:
                         Sync(config, self.dir).execute()
             except Exception as e:
                 logging.warning(str(e))
-                #print(traceback.format_exc())
+                print(traceback.format_exc())
             sleep(40)  # <60 and >30
 
 
