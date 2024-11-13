@@ -139,12 +139,16 @@ class FilesyncService:
     def __reload(self):
         new_configs = set()
         for f in os.scandir(self.dir):
-            if f.is_file() and f.name.endswith(".yml"):
-                with open(os.path.join(self.dir, f.name), 'r') as file:
-                    yml = yaml.safe_load(file)
-                    config = Config(file.name, yml)
-                    new_configs.add(config)
-                    logging.info(f.name + " reloaded (" + str(len(new_configs)) + " jobs)")
+            fn = os.path.join(self.dir, f.name)
+            try:
+                if f.is_file() and f.name.endswith(".yml"):
+                    with open(fn, 'r') as file:
+                        yml = yaml.safe_load(file)
+                        config = Config(file.name, yml)
+                        new_configs.add(config)
+                        logging.info(f.name + " reloaded (" + str(len(new_configs)) + " jobs)")
+            except Exception as e:
+                logging.warning("error occurred by loading " + str(fn) + " "  + str(e))
         self.configs = new_configs
 
     def __cron_loop(self):
