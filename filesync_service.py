@@ -92,8 +92,8 @@ class Sync(Progress):
         self.display = Display() if len(config.display) == 0 else RemoteDisplay(config.display)
 
     def execute(self):
-        self.display.show("sync...\n")
         for task in self.config.tasks:
+            self.display.show("sync\n\r" + task.target.split("/")[-1] + "...")
             sync_folder(source_address=task.source,
                         target_address=task.target,
                         ignore_lastmodified=task.ignore_lastmodified,
@@ -146,7 +146,7 @@ class FilesyncService:
                         yml = yaml.safe_load(file)
                         config = Config(file.name, yml)
                         new_configs.add(config)
-                        logging.info(f.name + " reloaded (" + str(len(new_configs)) + " jobs)")
+                        logging.info(f.name + " reloaded")
             except Exception as e:
                 logging.warning("error occurred by loading " + str(fn) + " "  + str(e))
         self.configs = new_configs
