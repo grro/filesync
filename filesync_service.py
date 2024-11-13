@@ -33,11 +33,11 @@ class Task:
 
     @property
     def source(self) -> str:
-        return self.__conf['source']
+        return self.__conf['source'].strip()
 
     @property
     def target(self) -> str:
-        return self.__conf['target']
+        return self.__conf['target'].strip()
 
     @property
     def ignore_patterns(self) -> List[str]:
@@ -72,8 +72,8 @@ class Config:
 
     def __init__(self, file: str, conf: Dict[str, Any]):
         self.file = file
-        self.cron = conf['cron']
-        self.display = conf.get('display', "")
+        self.cron = conf['cron'].strip()
+        self.display = conf.get('display', "").strip()
         self.simulate = conf.get('simulate', False)
         self.tasks = [Task(task) for task in conf['tasks']]
 

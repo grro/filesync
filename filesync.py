@@ -376,7 +376,6 @@ def sync_folder(source_address: str,
                         pass
         except Exception as e:
             logging.warning("error occurred scanning mail info tree" + str(e))
-            print(traceback.format_exc())
 
     try:
         logging.info("scanning target " + target.address + "... ")
