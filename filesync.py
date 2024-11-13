@@ -267,6 +267,16 @@ def storeprovider(address):
     else:
         return FileStoreProvider(address)
 
+def anonymize(url: str) -> str:
+    try:
+        if "@" in url:
+            end = url.index("@")
+            start = url.rindex(":")
+            return url[:start] + ":xxxxxxx" + url[end:]
+    except Exception as e:
+        pass
+    return url
+
 def parse_url(url):
     parts = urlparse(url)
     creds, host = parts.netloc.split('@', 1)
@@ -338,7 +348,7 @@ def sync_folder(source_address: str,
         start = time.time()
         source_file_tree = source.info_tree(ignore_subdirs)
         elapsed = time.time() - start
-        logging.info(str(len(source_file_tree.keys())) + " files found (" + print_elapsed_time(elapsed) + ")")
+        logging.info("source " + anonymize(source_address) + " - " + str(len(source_file_tree.keys())) + " files found (" + print_elapsed_time(elapsed) + ")")
     except Exception as e:
         logging.error("Error occurred by requesting " + source.address + " " + str(e))
         return 0
@@ -353,15 +363,16 @@ def sync_folder(source_address: str,
                 with open(sync_prop_file, "rb") as f:
                     hashes = pickle.load(f)
                     if hash_key in hashes.keys():
-                        logging.info(sync_prop_file + " entry found for key " + hash_key)
+                        #logging.info(sync_prop_file + " entry found for key " + hash_key)
                         previous_hash_code = hashes.get(hash_key)
                         if hash_code == previous_hash_code:
                             logging.info("source is unchanged")
                             return 0
                         else:
-                            logging.info("hashcode " + hash_code + " != previous hashcode " + previous_hash_code + " (" + hash_key + ")")
+                            logging.debug("hashcode " + hash_code + " != previous hashcode " + previous_hash_code + " (" + hash_key + ")")
                     else:
-                        logging.info(sync_prop_file + " no entry found for key " + hash_key)
+                        logging.debug(sync_prop_file + " no entry found for key " + hash_key)
+                        pass
         except Exception as e:
             logging.warning(str(e))
 
@@ -370,9 +381,9 @@ def sync_folder(source_address: str,
         start = time.time()
         target_file_tree = target.info_tree(ignore_subdirs)
         elapsed = time.time() - start
-        logging.info(str(len(target_file_tree.keys())) + " files found (" + print_elapsed_time(elapsed) + ")")
+        logging.info("target " + anonymize(target_address) + " - " + str(len(target_file_tree.keys())) + " files found (" + print_elapsed_time(elapsed) + ")")
     except Exception as e:
-        logging.error("Error occurred by requesting " + target.address + " " + str(e))
+        logging.error("Error occurred by requesting " + target.address + " to fetch file info" + str(e))
         return 0
 
     # copying new/updated artifacts
@@ -424,7 +435,8 @@ def sync_folder(source_address: str,
     else:
         hashes[hash_key] = hash_code
     if hashes[hash_key] != previous_hash_code:
-        logging.info("update with new hash " + hash_code + " (" + hash_key + ")")
+        logging.debug("update with new hash " + hash_code + " (" + hash_key + ")")
+        pass
     with open(sync_prop_file, "wb") as f:
         pickle.dump(hashes, f) # save hashes
 

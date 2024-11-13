@@ -152,7 +152,6 @@ class FilesyncService:
         self.configs = new_configs
 
     def __cron_loop(self):
-        id = str(threading.get_native_id())
         while self.__is_running:
             try:
                 for config in self.configs:
